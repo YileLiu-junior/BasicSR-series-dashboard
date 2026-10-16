@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<!--
+  BasicLLIE 工作台 · 生产版 v1（localhost 静态应用）
+  数据源：data/data.json（由 tools/parse_trio_log.py 或手工更新，刷新即生效）
+  样式基线：../design-demos/v5-todo-agents-armdetail.html（用户已确认）
+  启动：node tools/server.mjs → http://localhost:8765（file:// 下 fetch data.json 会被拦）
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BasicLLIE · UHD-LLIE 任务控制台</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,900;1,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="bg-stage" aria-hidden="true"><div id="stars"></div><div id="stars2"></div><div id="stars3"></div></div>
+<div class="stage-light" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ═══════════ 侧栏 · 垂直暗场轴 ═══════════ -->
+<aside class="axis">
+  <div class="brand">
+    <div class="brand-mark">Basic<span>LLIE</span></div>
+    <div class="brand-sub">UHD-LLIE 任务控制台</div>
+    <div class="brand-rule"></div>
+  </div>
+  <nav class="nav">
+    <button type="button" class="nav-it active" data-view="overview" data-title="总览 · OVERVIEW">
+      <span class="n-idx">01</span><span class="n-zh">总览</span><span class="n-en">OVERVIEW</span>
+    </button>
+    <button type="button" class="nav-it" data-view="innovations" data-title="Idea 溯源 · IDEA TRACE">
+      <span class="n-idx">02</span><span class="n-zh">Idea 溯源</span><span class="n-en">IDEA TRACE</span>
+    </button>
+    <button type="button" class="nav-it" data-view="ablations" data-title="消融台账 · ABLATIONS">
+      <span class="n-idx">03</span><span class="n-zh">消融台账</span><span class="n-en">ABLATIONS</span>
+    </button>
+    <button type="button" class="nav-it" data-view="monitor" data-title="实验监控 · MONITOR">
+      <span class="n-idx">04</span><span class="n-zh">实验监控</span><span class="n-en">MONITOR</span>
+    </button>
+    <button type="button" class="nav-it" data-view="wiki" data-title="知识库 · WIKI">
+      <span class="n-idx">05</span><span class="n-zh">知识库</span><span class="n-en">WIKI</span>
+    </button>
+  </nav>
+  <div class="axis-foot">
+    <div class="axis-label">SLOT MAP · 槽位现状</div>
+    <ul class="slots" id="slotList"></ul>
+  </div>
+</aside>
+
+<!-- ═══════════ 主区 ═══════════ -->
+<main>
+  <header class="topbar">
+    <div class="crumb"><span class="sq"></span><h1 id="viewTitle">总览 · OVERVIEW</h1></div>
+    <div class="top-right">
+      <div class="legend" title="数据 provenance 分级">
+        <span class="lg"><i class="dot dot-meas"></i>实测</span>
+        <span class="lg"><i class="dot dot-inf"></i>推断</span>
+        <span class="lg"><i class="dot dot-pend"></i>待验证</span>
+        <span class="lg"><i class="dot dot-neg"></i>负结果</span>
+      </div>
+      <button type="button" class="sync" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+        同步 · 二期接 SSH
+      </button>
+    </div>
+    <span class="flowbeam" aria-hidden="true"></span>
+  </header>
+
+  <!-- ─────── 01 总览：不对称便当拼图 ─────── -->
+  <section class="view active" data-view="overview">
+    <div class="frontline">
+      <span class="fl-lab">当前前沿</span>
+      <p id="frontlineText" style="margin:0"></p>
+    </div>
+
+    <div class="wikifeed">
+      <span class="wf-lab">WIKI · 实验笔记新增行</span>
+      <div class="wf-items" id="wfItems"></div>
+    </div>
+
+    <div class="bento">
+      <!-- 监控大屏（主导块） -->
+      <article class="card major card-monitor">
+        <div class="scanlines" aria-hidden="true"></div>
+        <div class="vig" aria-hidden="true"></div>
+        <div class="runner" aria-hidden="true">
+          <div class="loader"><span><span></span><span></span><span></span><span></span></span>
+            <div class="base"><span></span><div class="face"></div></div></div>
+          <div class="longfazers"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-blue"></i>LIVE · 实验监控 · 710</span>
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="badge b-meas">实测</span>
+            <span class="chip chip-run"><i class="breath"></i>进行中 · TRIO</span>
+          </span>
+        </div>
+        <h2 class="card-title">iccb_level 三臂消融</h2>
+        <p class="card-sub">注入层 L1 / L2 / L3 · 唯一架构变量 · 不改 DS/US 槽位 · 起飞 2026-10-11 09:26 UTC</p>
+        <div class="triptych" id="triptych">
+        <div class="mon-foot">
+          <span>tmux <b class="c-blue">lvl{1,2,3}_trio</b></span><span class="sep"></span>
+          <span>日志 tmp_trio/lvl{1,2,3}.log</span><span class="sep"></span>
+          <span>单臂 30k ≈ 28.6h</span><span class="sep"></span>
+          <span>推算 ETA <b class="c-blue">2026-10-12 ~14:00 UTC</b></span>
+          <span class="chip chip-warn">判据待用户拍板</span>
+          <a class="mini-link" data-goto="monitor">进入监控 →</a>
+        </div>
+      </article>
+
+      <!-- 待做清单（NEXT 合并扩展） -->
+      <article class="card major card-todo">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-mag"></i>待做清单 · TODO</span>
+          <span style="display:flex;gap:8px;align-items:center"><span class="badge b-neg">强制 ×1</span><a class="mini-link" data-goto="ablations">台账 →</a></span>
+        </div>
+        <div class="td-next">
+          <div class="td-nx-row"><span class="nx">NEXT</span><span class="td-nx-title">auxloss 小预算重跑</span><span class="badge b-neg">强制未排期</span></div>
+          <p class="ax-mono">~10k + <code>paired_gain_gate.py</code> 全 150 图逐图配对闸门 · 确认增益不再钳位 <b>0.75</b></p>
+          <div class="gates" style="margin:8px 0 0">
+            <span class="chip chip-warn">d̄ &lt; 0.01 → kill</span>
+            <span class="chip chip-ghost">0.01–0.03 → 灰区</span>
+          </div>
+        </div>
+        <table class="td-table">
+          <thead><tr><th>idea</th><th>待做</th><th>状态</th></tr></thead>
+          <tbody>
+            <tr><td class="td-idea" rowspan="3">ICCB<br>曝光状态校准</td><td><b>scan_proj 修复验证</b> · 跑级未验</td><td><span class="td-st st2-gpu">排队等 GPU</span></td></tr>
+            <tr><td><b>欠曝尾部机制拆臂</b> <span class="badge b-inf">推断</span> · 未消融</td><td><span class="td-st st2-cand">候选</span></td></tr>
+            <tr><td><b>mono/fc 塌缩解拆臂</b> · 未拆臂</td><td><span class="td-st st2-cand">候选</span></td></tr>
+            <tr><td class="td-idea" rowspan="2">PF-RPN<br>#011</td><td><b>论文稿收尾</b> · Latex/main.tex</td><td><span class="td-st st2-wip">撰写中</span></td></tr>
+            <tr><td><b>实验项目启动</b> · Exp/ 未初始化</td><td><span class="td-st st2-gpu">待启动</span></td></tr>
+          </tbody>
+        </table>
+        <div class="meta" style="margin-top:auto;padding-top:6px">进行中不计入 NEXT · trio 终点评测见台账「进行中」</div>
+      </article>
+
+      <!-- agent/skill 使用指南 -->
+      <article class="card card-agents">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-purple"></i>AGENT / SKILL · 使用指南</span>
+          <span class="badge b-pend">示意数据</span>
+        </div>
+        <ul class="ag-list" id="agList"></ul>
+        <div class="lineage-foot">
+          <span class="meta">次数为示意 · 点按条目看 markdown 使用说明</span>
+          <a class="mini-link" data-doc="index">完整指南 →</a>
+        </div>
+      </article>
+
+      <!-- 主线 150k -->
+      <article class="card card-mainline">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-blue"></i>RESULT · 主线 150k framefull</span>
+          <span class="badge b-meas">实测</span>
+        </div>
+        <div class="ml-nums">
+          <span class="big">27.490</span><span class="lab">终点 @150k</span>
+          <span class="peak">27.540</span><span class="lab">峰值 @140k</span>
+        </div>
+        <p class="meta">SSIM <b>0.9354</b> · LPIPS <b>0.2048</b> · <b>74k 后饱和</b></p>
+        <div class="dark-block">
+          <h4>暗侧 · 系统性欠曝</h4>
+          <div class="exbar" title="~15% 尾部图像"><i></i></div>
+          <p>~<b>15%</b> 尾部图像欠曝（gt/out 亮度比 <b>1.30–1.66</b>）；逐图最优仿射在最差 <b>8</b> 张可回收 <b class="c-blue">+9~+20 dB</b>。</p>
+        </div>
+        <div class="ml-foot">
+          <span class="badge b-inf">推断</span>
+          <p class="meta">与 gain_bound / 状态数容量有关，未消融</p>
+          <a class="mini-link" data-goto="ablations">→ 台账：欠曝尾部机制拆臂</a>
+        </div>
+      </article>
+
+      <!-- 溯源谱系 -->
+      <article class="card card-lineage">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-purple"></i>LINEAGE · Idea 溯源 · 主线谱系</span>
+          <span class="slot-chip">L</span>
+        </div>
+        <p class="card-sub">ICCB 曝光状态校准 · 宿主 wavemamba_a1a5_arch.py（710）</p>
+        <div class="chain">
+          <span class="ck">A3</span><span class="arr">→</span>
+          <span class="ck">A7</span><span class="arr">→</span>
+          <span class="ck">attrib 四臂</span><span class="arr">→</span>
+          <span class="ck">150k framefull</span><span class="arr">→</span>
+          <span class="ck">tile 门禁</span><span class="arr">→</span>
+          <span class="ck ck-now"><i class="breath" style="width:7px;height:7px"></i>iccb_level trio</span>
+        </div>
+        <p class="meta">关键旋钮 <b>use_state_scan</b> / <b>state_source</b> / <b>iccb_level</b> / <b>gain_mode</b> · 基线 Wave-Mamba</p>
+        <div class="lineage-foot">
+          <span class="meta">共 5 条创新点</span>
+          <a class="mini-link" data-goto="innovations">查看全部 →</a>
+        </div>
+      </article>
+
+      <!-- 基线锚点（紧凑位） -->
+      <article class="card major card-anchor">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-blue"></i>基线锚点 · ANCHOR</span>
+          <span class="badge b-meas">实测</span>
+        </div>
+        <div class="anchor-num" style="margin-top:2px"><b style="font-size:46px" id="blPsnr">--</b><span class="unit">dB · PSNR</span></div>
+        <div class="anchor-duo">SSIM <b id="blSsim">--</b><span class="slash">/</span>LPIPS <b id="blLpips">--</b></div>
+        <div class="rule-grad"></div>
+        <p class="meta">A0 scratch · UHDLL 全量 · iter <b id="blIter">--</b> · 口径 eval_metrics_full.py（crop_border=1 · Y 通道）</p>
+        <div class="anchor-note">暗电平基准 —— 全量对比一律对齐 <b>26.90</b>；WaveMamba 论文 28.53 为预训练权重，不可相减</div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ─────── 02 创新溯源 ─────── -->
+  <section class="view" data-view="innovations">
+    <div class="page-head">
+      <h2>Idea 溯源 · IDEA TRACE</h2>
+      <span class="ph-sub">源论文 → 本地 idea/代码（修改方向）→ 衍生实验链 → 当前状态 · 每条带槽位标签</span>
+    </div>
+
+    <article class="inno inno-trunk inno-running">
+      <div class="inno-head">
+        <i class="cursor-live" aria-hidden="true"></i><span class="inno-idx">I-01</span>
+        <h3>ICCB 曝光状态校准</h3>
+        <span class="sub">K=4 · exposure-ordered state calibration · 基线 Wave-Mamba</span>
+        <span class="right"><span class="slot-chip">L</span><span class="badge b-meas">实测</span><span class="chip chip-run"><i class="breath"></i>iccb_level trio 裁决中</span></span>
+      </div>
+      <div class="inno-cols">
+        <div><label>源</label><p>本项目提出（<span class="hl">exposure-ordered</span> 状态校准），宿主为 Wave-Mamba 基线架构。</p></div>
+        <div><label>本地宿主 · 修改方向</label>
+          <p class="mono"><code>wavemamba_a1a5_arch.py</code>（710）</p>
+          <p class="mono knobs">use_state_scan / state_source / iccb_level / gain_mode</p>
+        </div>
+        <div><label>衍生实验链</label>
+          <div class="chain" style="margin:0">
+            <span class="ck">A3</span><span class="arr">→</span><span class="ck">A7</span><span class="arr">→</span>
+            <span class="ck">attrib 四臂</span><span class="arr">→</span><span class="ck">150k framefull</span><span class="arr">→</span>
+            <span class="ck">tile 门禁</span><span class="arr">→</span><span class="ck ck-now"><i class="breath" style="width:7px;height:7px"></i>iccb_level trio</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="inno">
+      <div class="inno-head">
+        <span class="inno-idx">I-02</span>
+        <h3>scan_proj 零初始化修复</h3>
+        <span class="sub">开关打开即恒等的初始化修复</span>
+        <span class="right"><span class="badge b-pend">待验证</span><span class="chip chip-ghost">单元级已验证 · 跑级待验证</span></span>
+      </div>
+      <div class="inno-cols">
+        <div><label>根因（ defect 溯源）</label>
+          <p><span class="hl">gain_head</span> 零初始化，而相邻 <span class="hl">scan_proj</span> 走 nn.Linear 默认随机初始化 —— 开关打开即注入随机投影。</p></div>
+        <div><label>后果与修复</label>
+          <p class="mono">整图 <span class="knobs">0.75× 欠曝、−2.60 dB</span></p>
+          <p class="mono">修复后初值严格恒（max|Δ|=<span class="hl">0.000e+00</span>）</p>
+          <p class="mono">710 md5 <span class="hl">41ff51f1 → 5e3c8ee0</span></p></div>
+        <div><label>验证链</label>
+          <p class="mono">单测 <code>tmp/check_scan_proj_fix.py</code></p>
+          <p>单元级已过；<span class="hl">跑级验证排队等 GPU</span>（见台账）。</p></div>
+      </div>
+    </article>
+
+    <article class="inno">
+      <div class="inno-head">
+        <span class="inno-idx">I-03</span>
+        <h3>PF-RPN</h3>
+        <span class="sub">idea #011</span>
+        <span class="right"><span class="chip chip-ghost">论文稿撰写中</span></span>
+      </div>
+      <div class="inno-cols">
+        <div><label>源仓库</label>
+          <p class="mono"><code>github.com/tangqh03/PF-RPN</code></p></div>
+        <div><label>本地落位</label>
+          <p class="mono"><code>Ideas/011-pf-rpn/{Idea, Codes, Exp, Latex}</code></p></div>
+        <div><label>当前状态</label>
+          <p>论文稿撰写中，入口 <span class="hl mono">Latex/main.tex</span>。</p></div>
+      </div>
+    </article>
+
+    <article class="inno">
+      <div class="inno-head">
+        <span class="inno-idx">I-04</span>
+        <h3>FFT Loss</h3>
+        <span class="sub">L1+FFT+SSIM</span>
+        <span class="right"><span class="slot-chip">LOSS</span><span class="badge b-meas">实测</span><span class="chip chip-ghost">必要性已成立</span></span>
+      </div>
+      <div class="inno-cols">
+        <div><label>证据（负向消融）</label>
+          <p>去除 FFT、仅留 L1 后<span class="hl">指标下降</span> —— 已验证的负向消融。</p></div>
+        <div><label>结论</label>
+          <p><span class="hl">FFT loss 必要性成立</span>，进入默认 LOSS 槽位组合。</p></div>
+        <div><label>槽位</label>
+          <p class="mono">LOSS = <span class="hl">L1 + FFT + SSIM</span></p></div>
+      </div>
+    </article>
+
+    <article class="inno inno-forced">
+      <div class="hazard" aria-hidden="true"></div>
+      <div class="inno-head" style="padding-top:6px">
+        <span class="inno-idx">I-05</span>
+        <h3>下一步（强制未排期）：auxloss 小预算重跑</h3>
+        <span class="right"><span class="badge b-neg">强制未排期</span><span class="badge b-pend">待验证</span></span>
+      </div>
+      <div class="inno-cols">
+        <div><label>预算与工具</label>
+          <p class="mono">~10k + <code>paired_gain_gate.py</code> 全 150 图逐图配对闸门</p></div>
+        <div><label>闸门口径</label>
+          <p class="mono"><span class="knobs">d̄ &lt; 0.01 → kill</span> · 0.01–0.03 → 灰区</p></div>
+        <div><label>排期状态</label>
+          <p>wiki 已登记为<b class="c-mag">强制</b>，但<b>无预登记配置 / 预算 / 排队槽位</b> —— 需要拍板排期。</p></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ─────── 03 消融台账 ─────── -->
+  <section class="view" data-view="ablations">
+    <div class="page-head">
+      <h2>消融台账 · ABLATIONS</h2>
+      <span class="ph-sub">待做 / 进行中 / 已做（含结果）/ 负结果 · 门禁口径写在条目上</span>
+    </div>
+    <div class="filters" id="abFilters"></div>
+    <ul class="ab-list" id="abList"></ul>
+  </section>
+
+  <!-- ─────── 04 实验监控 ─────── -->
+  <section class="view" data-view="monitor">
+    <div class="page-head">
+      <h2>实验监控 · MONITOR</h2>
+      <span class="ph-sub">710 服务器 · trio 三臂运行快照 · 快照口径，非实时</span>
+    </div>
+    <div class="tabs" id="monTabs">
+      <button type="button" class="tab active" data-t="arms">三臂快照</button>
+      <button type="button" class="tab" data-t="res">资源与日志</button>
+      <button type="button" class="tab" data-t="crit">判据口径</button>
+    </div>
+
+    <div class="tabpan active" data-p="arms">
+      <div class="panel">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-blue"></i>iccb_level 三臂消融 · 注入层位置裁决</span>
+          <span style="display:flex;gap:8px;align-items:center">
+            <span class="badge b-meas">实测</span>
+            <span class="chip chip-run"><i class="breath"></i>进行中</span>
+          </span>
+        </div>
+      <div class="arm-table" id="monArms">
+        <div class="at-head"><span>臂</span><span>注入组</span><span>裁剪</span><span>此前</span><span>GPU</span><span>备注</span></div>
+        <div id="monRows"></div>
+      </div>
+      <div class="m-detail" id="mDetail" hidden></div>
+        <div class="mon-meta">
+          <span>起飞 <b>2026-10-11 09:26 UTC</b></span>
+          <span>实测前 <b>650 iter</b> @ <b>3.43 s/iter</b></span>
+          <span>单臂 30k ≈ <b>28.6h</b></span>
+          <span>推算 ETA <b class="c-blue">2026-10-12 ~14:00 UTC</b></span>
+          <span>进度以「已验证 650/30000 + 推算 ETA」表述，不伪造当前 iter</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabpan" data-p="res">
+      <div class="panel">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-blue"></i>显存与运行入口 · 710</span>
+          <span class="badge b-meas">实测</span>
+        </div>
+        <div class="vram">
+          <div class="vrow"><span class="vlab">train</span><div class="vtrack"><i style="width:59.9%"></i></div><b>34.27 GB</b></div>
+          <div class="vrow"><span class="vlab">val</span><div class="vtrack"><i style="width:94.8%"></i></div><b>54.28 GB</b></div>
+          <div class="vrow peak"><span class="vlab">max_peak</span><div class="vtrack"><i style="width:100%"></i></div><b>57.23 GB</b></div>
+        </div>
+        <p class="meta">满刻度取实测 max_peak 57.23 GB · 全局 batch <b>8</b></p>
+        <div class="mon-meta">
+          <span>tmux <b class="c-blue">lvl{1,2,3}_trio</b></span>
+          <span>日志 <b>tmp_trio/lvl{1,2,3}.log</b></span>
+          <span>710 项目根 <b>/workspace/Code/BasicLLIE</b></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabpan" data-p="crit">
+      <div class="panel">
+        <div class="card-head">
+          <span class="kick"><i class="sqk sqk-mag"></i>三臂裁决 · 判据口径</span>
+          <span class="badge b-neg">待用户拍板</span>
+        </div>
+        <div class="criter">
+          <span class="stamp">判据待用户拍板</span>
+          <p class="ct">候选判据：固定 <b>30k 终点</b>比 PSNR，<span class="ban">禁止按峰值选点</span>；
+            阈值 max pairwise |ΔPSNR| &gt; 0.30 dB（≈3σ）。
+            <span class="mono-line">threshold · max pairwise |ΔPSNR| &gt; 0.30 dB ≈ 3σ</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────── 05 知识库（docs 阅读器：面包屑 + 目录 + 正文 + 标题分级 + 助理右分栏） ─────── -->
+  <section class="view" data-view="wiki">
+    <div class="page-head">
+      <h2>知识库 · WIKI</h2>
+      <span class="ph-sub">kb/wiki 阅读器 · 面包屑切分类 · 左目录含标题子分级 / 中正文 · 右分栏为工作台助理</span>
+    </div>
+    <div class="kb-tabs" id="kbTabs"></div>
+    <div class="kb-wrap">
+      <aside class="kb-tree" id="kbTree"></aside>
+      <div class="kb-content">
+        <div class="kb-meta" id="kbMeta"></div>
+        <div class="md-body kb-article" id="kbArticle"></div>
+      </div>
+      <div class="kb-ai" id="aiSlot"></div>
+    </div>
+  </section>
+
+  <!-- ─────── 06 使用文档（markdown 渲染 · drill-down） ─────── -->
+  <section class="view" data-view="doc">
+    <div class="page-head">
+      <h2 id="docTitle">使用文档 · DOCS</h2>
+      <span class="ph-sub">markdown 网页版渲染 · 与 .agents / skills 源定义同源</span>
+    </div>
+    <div class="md-wrap">
+      <div class="md-meta"><button type="button" class="btn-ghost" data-goto="overview">← 返回总览</button><span id="docPath"></span></div>
+      <div class="md-body" id="mdBody"></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>BasicLLIE 工作台 · 生产版 v1 · 快照 <span id="snapDate">--</span> · 数据 data/data.json</span>
+    <span>口径 eval_metrics_full.py（crop_border=1 · Y 通道）</span>
+  </footer>
+</main>
+
+<!-- ═══════════ v5c · 右侧助理 dock ═══════════ -->
+<div class="aidock" id="aidock">
+  <button type="button" class="aidock-tab" id="aidockTab" title="工作台助理 · 点击展开">
+    <span class="ai-spinwrap" aria-hidden="true" style="width:46px;height:46px"><span class="spinner"><span class="spinner1"></span></span></span>
+  </button>
+  <div class="aidock-panel">
+    <div class="aidock-head">
+      <span class="ai-spinwrap sm" aria-hidden="true"><span class="spinner"><span class="spinner1"></span></span></span>
+      <div class="aidock-id">
+        <b>工作台助理</b>
+        <span class="ai-stat" id="aiStatus" title="未配置 · 填入 API key 后可问答" aria-label="助理状态">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v9"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg>
+        </span>
+      </div>
+      <button type="button" class="aidock-btn" id="aiSettingsBtn" title="API 设置">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      </button>
+      <button type="button" class="aidock-btn" id="aiClose" title="收起">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="aidock-settings" id="aiSettings" hidden>
+      <label>API 地址（OpenAI 兼容）
+        <input id="aiBase" type="text" placeholder="https://api.openai.com/v1 · https://api.deepseek.com/v1 …">
+      </label>
+      <label>API Key
+        <input id="aiKey" type="password" placeholder="sk-…">
+      </label>
+      <label>模型
+        <input id="aiModel" type="text" placeholder="gpt-4o-mini / deepseek-chat / glm-4.7 …">
+      </label>
+      <div class="ai-setrow">
+        <button type="button" class="btn-ghost" id="aiTest">连接检测</button>
+        <span id="aiTestOut"></span>
+      </div>
+      <p class="ai-hint">Key 仅存本地 localStorage，请求由浏览器直连你填写的端点；若被跨域拦截，换支持 CORS 的服务商。</p>
+    </div>
+    <div class="aidock-msgs" id="aiMsgs"></div>
+    <div class="aidock-input">
+      <input id="aiText" type="text" placeholder="问点什么…（Enter 发送）">
+      <button type="button" id="aiSend">发送</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/wiki-data.js"></script>
+<script src="assets/docs-data.js"></script>
+<script src="assets/config-yaml.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

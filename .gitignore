@@ -1,0 +1,21 @@
+# 依赖
+node_modules/
+
+# verify.mjs 产出的截图（生成物，可重新跑出）
+app/shots/
+app/tools/shots/
+
+# 日志 / 训练日志临时目录
+*.log
+tmp_trio/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]

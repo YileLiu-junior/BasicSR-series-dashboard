@@ -1,0 +1,136 @@
+{
+  "snapshot": {
+    "date": "2026-10-11",
+    "source": "710 /workspace/Code/BasicLLIE",
+    "note": "L2/L3 的 eta/loss 序列为快照示意；正式同步由 tools/parse_trio_log.py 生成"
+  },
+  "frontier": "主线 150k framefull 已收敛（终点 <b>27.490</b> · 74k 后饱和）· <b>iccb_level trio</b> 正在裁决注入层位置 · <b class=\"c-mag\">auxloss 强制未排期</b>",
+  "baseline": {
+    "psnr": "26.90",
+    "ssim": "0.9314",
+    "lpips": "0.2015",
+    "iter": "426,000"
+  },
+  "slots": [
+    ["DS", "Haar DWT"],
+    ["US", "Haar IWT"],
+    ["L", "SS2D+GFFN (MambaIR)"],
+    ["H", "CMTAttention+FFN"],
+    ["M", "l2-NN"],
+    ["F", "SKFF"],
+    ["S", "proposed · WaveletFRG 原型"],
+    ["LOSS", "L1+FFT+SSIM"]
+  ],
+  "feed": [
+    { "page": "iccb-placement-level-ablation.md", "txt": "三臂已起飞：L1@gpu0 / L2@gpu2（借用）/ L3@gpu1 · 实测 3.43 s/iter · 推算 ETA 10-12 ~14:00Z", "date": "10-11" },
+    { "page": "iccb-attrib-uhdll-150k-full.md", "txt": "scan_proj 根因定位与修复：随机初始化 → 零初始化，710 md5 41ff51f1→5e3c8ee0，单测恒等 0.000e+00", "date": "10-11" },
+    { "page": "iccb-attrib-uhdll-150k-full.md", "txt": "闸门实测：auxloss@10k 整图 0.75× 钳位、配对 −2.6042 dB → 新增 SATURATED 判语", "date": "10-11" }
+  ],
+  "agents": [
+    { "name": "@llie-sisyphus", "cls": "", "desc": "跨阶段编排 · 状态/门禁/唯一下一步", "count": 42, "doc": "sisyphus" },
+    { "name": "@llie-explore", "cls": "", "desc": "仓库只读定位 · path:line 证据链", "count": 35, "doc": "explore" },
+    { "name": "$llie-exp-status", "cls": "skl", "desc": "tmux / GPU / 日志巡检", "count": 31, "doc": "expstatus" },
+    { "name": "@llie-oracle", "cls": "", "desc": "槽位决策 · slot_decision", "count": 28, "doc": "oracle" },
+    { "name": "$llie-exp-train", "cls": "skl", "desc": "训练启动 · tmux + auto_resume", "count": 17, "doc": "exptrain" }
+  ],
+  "trio": {
+    "title": "iccb_level 三臂消融",
+    "launched": "2026-10-11 09:26 UTC",
+    "verified_iter": 650,
+    "total_iter": 30000,
+    "s_per_iter": "3.43",
+    "eta": "2026-10-12 ~14:00 UTC",
+    "arms": [
+      {
+        "id": "L1",
+        "group": "down_group1",
+        "crop": "H÷2",
+        "gpu": "@gpu0",
+        "prior": "从未执行",
+        "row_note": "唯一架构变量，不改 DS/US 槽位",
+        "tags": [ { "t": "此前从未执行" }, { "t": "@gpu0", "cls": "tag-gpu" } ],
+        "note": "",
+        "folder": "experiments/WaveMamba-Attrib/wavemamba_attrib_framefull_lvl1_…/",
+        "log": "tmp_trio/lvl1.log",
+        "eta_label": "1 day, 0:06:41",
+        "eta_sec": 86801,
+        "iter_label": "4,350",
+        "epoch": 17,
+        "real": true,
+        "series": [[600, 0.2385], [900, 0.1962], [1200, 0.1688], [1500, 0.1512], [1800, 0.1403], [2100, 0.1289], [2400, 0.1196], [2700, 0.1118], [3000, 0.1046], [3300, 0.0969], [3600, 0.0895], [3900, 0.0821], [4100, 0.0758], [4250, 0.0714], [4350, 0.068157]],
+        "table": [
+          ["3,300", "9.6900e-02", "6.6120e-01", "4.755e-04", "3.452 (0.289)"],
+          ["3,600", "8.9500e-02", "6.4180e-01", "4.755e-04", "3.470 (0.312)"],
+          ["3,900", "8.2100e-02", "6.2260e-01", "4.755e-04", "3.441 (0.287)"],
+          ["4,250", "7.1400e-02", "6.0470e-01", "4.755e-04", "3.480 (0.318)"],
+          ["4,350", "6.8157e-02", "5.9363e-01", "4.755e-04", "3.466 (0.301)"]
+        ]
+      },
+      {
+        "id": "L2",
+        "group": "down_group2",
+        "crop": "H÷4",
+        "gpu": "@gpu2",
+        "prior": "默认层",
+        "row_note": "借用的卡 · 同学要用时 <code>tmux kill-session -t lvl2_trio</code> 即退回两臂结论",
+        "tags": [ { "t": "默认层" }, { "t": "借用的卡", "cls": "tag-borrow" }, { "t": "@gpu2", "cls": "tag-gpu" } ],
+        "note": "同学要用时 <code>tmux kill-session -t lvl2_trio</code> 即退回两臂结论",
+        "folder": "experiments/WaveMamba-Attrib/wavemamba_attrib_framefull_lvl2_…/",
+        "log": "tmp_trio/lvl2.log",
+        "eta_label": "1 day, 0:07:58",
+        "eta_sec": 86878,
+        "iter_label": "4,34x",
+        "epoch": 17,
+        "real": false,
+        "series": [[600, 0.2411], [900, 0.1995], [1200, 0.1721], [1500, 0.1536], [1800, 0.1427], [2100, 0.1304], [2400, 0.1211], [2700, 0.1132], [3000, 0.1057], [3300, 0.0984], [3600, 0.0912], [3900, 0.0838], [4100, 0.0772], [4250, 0.0725], [4340, 0.0698]],
+        "table": [
+          ["3,300", "9.8400e-02", "6.6740e-01", "4.755e-04", "3.46x (0.29x)"],
+          ["3,600", "9.1200e-02", "6.4900e-01", "4.755e-04", "3.47x (0.31x)"],
+          ["3,900", "8.3800e-02", "6.2610e-01", "4.755e-04", "3.45x (0.28x)"],
+          ["4,250", "7.2500e-02", "6.0830e-01", "4.755e-04", "3.48x (0.32x)"],
+          ["4,340", "6.9800e-02", "5.9640e-01", "4.755e-04", "3.46x (0.30x)"]
+        ]
+      },
+      {
+        "id": "L3",
+        "group": "down_group3",
+        "crop": "H÷8",
+        "gpu": "@gpu1",
+        "prior": "从未执行",
+        "row_note": "与 L1/L2 同步起飞",
+        "tags": [ { "t": "此前从未执行" }, { "t": "@gpu1", "cls": "tag-gpu" } ],
+        "note": "",
+        "folder": "experiments/WaveMamba-Attrib/wavemamba_attrib_framefull_lvl3_…/",
+        "log": "tmp_trio/lvl3.log",
+        "eta_label": "1 day, 0:06:12",
+        "eta_sec": 86772,
+        "iter_label": "4,34x",
+        "epoch": 17,
+        "real": false,
+        "series": [[600, 0.2362], [900, 0.1948], [1200, 0.1673], [1500, 0.1498], [1800, 0.1391], [2100, 0.1276], [2400, 0.1183], [2700, 0.1104], [3000, 0.1032], [3300, 0.0958], [3600, 0.0884], [3900, 0.0812], [4100, 0.0749], [4250, 0.0706], [4345, 0.0674]],
+        "table": [
+          ["3,300", "9.5800e-02", "6.5870e-01", "4.755e-04", "3.44x (0.28x)"],
+          ["3,600", "8.8400e-02", "6.3920e-01", "4.755e-04", "3.46x (0.30x)"],
+          ["3,900", "8.1200e-02", "6.1980e-01", "4.755e-04", "3.43x (0.28x)"],
+          ["4,250", "7.0600e-02", "6.0210e-01", "4.755e-04", "3.47x (0.31x)"],
+          ["4,345", "6.7400e-02", "5.9080e-01", "4.755e-04", "3.45x (0.29x)"]
+        ]
+      }
+    ]
+  },
+  "ablations": [
+    { "s": "running", "st_label": "进行中", "st_cls": "st-run", "name": "iccb_level L1/L2/L3 trio", "res": "ETA <b>2026-10-12 ~14:00Z</b>；<span class=\"gate\">判据待拍板（30k 终点 pairwise &gt;0.30 dB）</span>" },
+    { "s": "todo", "forced": true, "st_label": "待做 · 强制未排期", "st_cls": "st-forced", "name": "auxloss 小预算重跑", "res": "~10k + 配对闸门；确认增益不再钳位 <b>0.75</b>　<span class=\"gate\">d̄&lt;0.01 kill / 0.01–0.03 灰区</span>" },
+    { "s": "todo", "st_label": "待做 · 排队等 GPU", "st_cls": "st-todo", "name": "scan_proj 修复验证", "res": "单元级已过，<b>跑级未验</b>" },
+    { "s": "todo", "st_label": "待做 · 候选", "st_cls": "st-todo", "name": "欠曝尾部机制拆臂（gain_bound / 状态数容量）<span class=\"inf badge b-inf\">推断</span>", "res": "最差 8 张 <b>+9~+20 dB</b> 空间" },
+    { "s": "todo", "st_label": "待做 · 候选", "st_cls": "st-todo", "name": "mono/fc 塌缩常数解拆臂", "res": "共享「增益塌成常数」退化解，<b>未拆臂</b>" },
+    { "s": "done", "st_label": "已做", "st_cls": "st-done", "name": "attrib 四臂 ×8 checkpoint", "res": "机制项 <b>−0.0833±0.1766</b> 稳健零；输入项峰区 <b>+1.2762</b>；页级 claim_blocked" },
+    { "s": "done", "st_label": "已做", "st_cls": "st-done", "name": "tile 三路门禁", "res": "locked vs local <b>+3.6622 dB</b>，四项全 true 门不关" },
+    { "s": "done", "st_label": "已做", "st_cls": "st-done", "name": "A1–A5 条件校准消融", "res": "A5−A2 = <b>+1.3039 dB</b>，通道感知最优" },
+    { "s": "done", "st_label": "已做 · 被替代", "st_cls": "st-done", "name": "B0–B3 归一化消融", "res": "机制项 <b>−0.04 dB</b>（710 attrib 同窗）" },
+    { "s": "done", "st_label": "已做", "st_cls": "st-done", "name": "C2SSM 30K 复跑", "res": "400 张 + 30K 过拟合区制；C2SSM <b>同 iter 全落后</b>" },
+    { "s": "neg", "st_label": "负结果", "st_cls": "st-neg", "name": "FEB+CAB 双模块搜索", "res": "C12−C0 = <b>+0.025 dB</b>，未过 0.3 门禁" },
+    { "s": "neg", "st_label": "负结果", "st_cls": "st-neg", "name": "ICRWS B2", "res": "2K 门禁极差 <b>≤0.0092</b> 当场否决；101K 45K 后回落" },
+    { "s": "neg", "st_label": "负结果", "st_cls": "st-neg", "name": "IA-GTM", "res": "照度头 / 损失分离证据" }
+  ]
+}
