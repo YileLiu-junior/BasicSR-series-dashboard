@@ -1,0 +1,43 @@
+name: Deploy 工作台到 GitHub Pages
+
+# 触发条件：push 到 main 自动部署；也可以在 Actions 页面手动触发
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 部署 Pages 所需的最小权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个部署；不取消进行中的部署，避免线上文件半新半旧
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
+      # 关键：只把 app/ 目录作为站点根上传。
+      # 于是站点根目录下就有 index.html / assets/ / data/，
+      # 而 app.js 里的 fetch('data/data.json') 是相对路径，能正确命中。
+      - name: 打包 app/ 目录
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./app
+
+      - name: 部署到 Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
